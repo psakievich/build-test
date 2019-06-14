@@ -8,20 +8,38 @@
 import os
 import sys
 from shutil import copy2
+from urllib import urlopen
+
+def url_ok(url):
+    r = urlopen(url).getcode()
+    return r == 200
 
 # Global parameters
 ROOTDIR = os.environ["HOME"]
 COMPILER = r"gcc@7.2.0"
-PVVERSION = r"v5.6.0"
 
 # Functions
+def ReadInputParams(fileName):
+    f = open(fileName, 'r')
+    output = {}
+    for line in f:
+        temp = line.strip().split(":")
+        output[temp[0].lower().strip()]=temp[1].strip()
+    return output
+    
 def SystemCall(command):
     # TODO Move this to subprocess and pipe output to logfile
     print("System Call: "+command)
     os.system(command)
 
 def CloneRepo( repoUrl, repoDest=''):
-    SystemCall("git clone  --recursive {repo} {dest}".format(repo=repoUrl, dest=repoDest))
+    if url_ok(repoUrl):
+        SystemCall("git clone --recursive {repo} {dest}".format(repo=repoUrl, dest=repoDest))
+    else:
+        raise Exception("Repo Url not found: {url}".format(url=repoUrl))
+
+def UpdateRepo(repo, remote, branch):
+    pass
 
 def CheckDirectory(dirName, create_it=False):
     exists = os.path.isdir(dirName)
@@ -42,9 +60,6 @@ def CloneRepos(baseLocation):
         if CheckDirectory(repoDest) is False:
             CloneRepo(url,repoDest)
 
-def UpdateRepo(repo, remote, branch):
-    pass
-
 def SetupSpackVariants(spackLocation, machine, options=[]):
     spackCommand = spackLocation+"/bin/spack"
     copy2(machine+"/packages.yaml",spackLocation+"/etc/spack")
@@ -58,17 +73,14 @@ def BuildNaluWind():
     pass
 
 if __name__=="__main__":
-    machine = 'default'
-    # TODO parse from file
     if len(sys.argv) < 2:
-        print("Please pass the machine type as an argument")
+        print("Please pass a configuration file.")
         print(sys.argv)
         exit(1)
     else:
-        machine = sys.argv[1]
-    baseLocation = CreateDirectories(machine)
+        configFile = sys.argv[1]
+    params = ReadInputParams(configFile)
+    baseLocation = CreateDirectories(params["machine"])
     CloneRepos(baseLocation)
     SetupSpackVariants(baseLocation+"spack",machine)
-    BuildParaview(machine)
-    BuildCatalyst(machine)
     BuildNaluWind()
