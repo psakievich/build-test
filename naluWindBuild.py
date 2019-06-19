@@ -11,6 +11,7 @@ from shutil import copy2
 from urllib2 import urlopen
 import subprocess
 from glob import glob
+from shutil import rmtree
 
 # Functions
 def url_ok(url):
@@ -91,6 +92,8 @@ def SpackBuildPackage(spackLocation, machine, operatingSystem,
             True)
     for f in glob(r"configs/machines/base/*.yaml"):
         copy2(f, spackLocation+r"/etc/spack/")
+    for f in glob(r"configs/machines/{machine}/*.yaml".format(machine=machine)):
+        copy2(f, spackLocation+r"/etc/spack/{os}/".format(os=operatingSystem))
     for f in glob(r"configs/machines/{machine}/*.yaml.{machine}".format(
         machine=machine)):
         newFile = f.strip(r"configs/machines/{machine}".format(machine=machine))
@@ -103,10 +106,11 @@ def SpackBuildPackage(spackLocation, machine, operatingSystem,
 def BuildNaluWindSpack(configFile):
     params = ReadInputParams(configFile)
     baseLocation = params["rootdir"]+"/"+params["machine"]+"/"
+    if params["wipe_directories"] is True:
+        rmtree(baseLocation)
     CloneNaluWindRepos(baseLocation)
     SpackBuildPackage(baseLocation+"spack", params["machine"], params["os"],
             "nalu-wind", params["flags"], params["variants"])
-
 
 if __name__=="__main__":
     if len(sys.argv) < 2:

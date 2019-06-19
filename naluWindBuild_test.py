@@ -58,6 +58,7 @@ class GeneralFunctionsMocks(unittest.TestCase):
 
 
 class GeneralFunctionsTest(GeneralFunctionsMocks):
+    # TODO set file permisions
     def test_directory_exists(self):
         self.assertTrue(nwb.CheckDirectory(self.ROOTDIR))
 
@@ -95,6 +96,8 @@ class GeneralFunctionsTest(GeneralFunctionsMocks):
         self.assertEqual(self.ROOTDIR, nwb.os.getcwd())
 
 class ReadInputMock(unittest.TestCase):
+    # TODO rootdir absolute/env vars/etc?
+    # TODO set file permisions
     def test_read_params_with_no_flags_or_variants(self):
         inputFile = """
             machine: mac
