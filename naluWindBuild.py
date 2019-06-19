@@ -8,7 +8,12 @@
 import os
 import sys
 from shutil import copy2
-from urllib2 import urlopen
+try:
+    # python2
+    from urllib2 import urlopen
+except:
+    # python3
+    from urllib.request import urlopen
 import subprocess
 from glob import glob
 from shutil import rmtree
@@ -19,11 +24,13 @@ def url_ok(url):
     return r == 200
 
 def ReadInputParams(fileName):
+    true = ["true", "yes"]
     # preload optional input file values
     output = {
             "flags":"",
             "variants":"",
-            "rootdir":os.environ["HOME"]
+            "rootdir":os.environ["HOME"],
+            "wipe_directories":"false"
             }
     with open(fileName, 'r') as f:
         data = f.readlines()
@@ -35,6 +42,7 @@ def ReadInputParams(fileName):
         key = temp[0].lower().strip()
         value = temp[1].strip()
         output[key] = value
+    output["wipe_directories"] = output["wipe_directories"].lower() in true
     return output
     
 def SystemCall(command):
@@ -100,13 +108,14 @@ def SpackBuildPackage(spackLocation, machine, operatingSystem,
         newFile = newFile.strip(".{machine}".format(machine=machine))
         copy2(f, spackLocation+r"/etc/spack/{os}/".format(os=operatingSystem)+newFile)
     executionCall = " ".join([spackCommand]+[flags]+[package]+[variants])
-    print executionCall
+    print(executionCallr)
     SystemCall(executionCall)
 
 def BuildNaluWindSpack(configFile):
     params = ReadInputParams(configFile)
     baseLocation = params["rootdir"]+"/"+params["machine"]+"/"
-    if params["wipe_directories"] is True:
+    if params["wipe_directories"] and CheckDirectory(baseLocation):
+        print( "Removing directory {dir}".format(dir=baseLocation))
         rmtree(baseLocation)
     CloneNaluWindRepos(baseLocation)
     SpackBuildPackage(baseLocation+"spack", params["machine"], params["os"],

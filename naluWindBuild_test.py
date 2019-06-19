@@ -1,5 +1,4 @@
 import unittest
-import urllib2
 
 try:
     import mock
@@ -80,7 +79,7 @@ class GeneralFunctionsTest(GeneralFunctionsMocks):
     def test_clone_repo_url_bad(self):
         repoUrl = "https://gothib.com/spock/spock.git"
         repoDir = self.ROOTDIR+"/spack"
-        with self.assertRaises(urllib2.URLError):
+        with self.assertRaises(IOError):
             nwb.CloneRepo(repoUrl,repoDir)
 
     def test_update_repo(self):
@@ -142,6 +141,42 @@ class ReadInputMock(unittest.TestCase):
         self.assertEqual("/blah/blah2", params["rootdir"])
         self.assertEqual("--dirty", params["flags"])
         self.assertEqual("+openfast ~shared", params["variants"])
+
+    def test_read_params_wipe_dir_true(self):
+        inputFile = """
+            machine: mac
+            os: darwin
+            rootdir: /blah/blah2
+            flags: --dirty
+            variants: +openfast ~shared
+            wipe_directories: true
+            """
+        with mock.patch('naluWindBuild.open', mock.mock_open(read_data=inputFile)):
+            params = nwb.ReadInputParams("dummy.txt")
+        self.assertEqual("darwin",params["os"])
+        self.assertEqual("mac",params["machine"])
+        self.assertEqual("/blah/blah2", params["rootdir"])
+        self.assertEqual("--dirty", params["flags"])
+        self.assertEqual("+openfast ~shared", params["variants"])
+        self.assertEqual(True, params["wipe_directories"])
+
+    def test_read_params_wipe_dir_false(self):
+        inputFile = """
+            machine: mac
+            os: darwin
+            rootdir: /blah/blah2
+            flags: --dirty
+            variants: +openfast ~shared
+            wipe_directories: false
+            """
+        with mock.patch('naluWindBuild.open', mock.mock_open(read_data=inputFile)):
+            params = nwb.ReadInputParams("dummy.txt")
+        self.assertEqual("darwin",params["os"])
+        self.assertEqual("mac",params["machine"])
+        self.assertEqual("/blah/blah2", params["rootdir"])
+        self.assertEqual("--dirty", params["flags"])
+        self.assertEqual("+openfast ~shared", params["variants"])
+        self.assertEqual(False, params["wipe_directories"])
 
 if __name__ == "__main__":
     unittest.main()
