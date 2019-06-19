@@ -8,38 +8,58 @@
 import os
 import sys
 from shutil import copy2
-from urllib import urlopen
+from urllib2 import urlopen
+import subprocess
+from glob import glob
 
+# Functions
 def url_ok(url):
     r = urlopen(url).getcode()
     return r == 200
 
-# Global parameters
-ROOTDIR = os.environ["HOME"]
-COMPILER = r"gcc@7.2.0"
-
-# Functions
 def ReadInputParams(fileName):
-    f = open(fileName, 'r')
-    output = {}
-    for line in f:
+    # preload optional input file values
+    output = {"flags":"","variants":""}
+    with open(fileName, 'r') as f:
+        data = f.readlines()
+    for line in data:
         temp = line.strip().split(":")
-        output[temp[0].lower().strip()]=temp[1].strip()
+        # skip blank lines
+        if len(temp)<=1:
+            continue
+        key = temp[0].lower().strip()
+        value = temp[1].strip()
+        output[key] = value
     return output
     
 def SystemCall(command):
-    # TODO Move this to subprocess and pipe output to logfile
-    print("System Call: "+command)
-    os.system(command)
+    subprocess.check_call(command)
 
-def CloneRepo( repoUrl, repoDest=''):
+def CloneRepo( repoUrl, repoDest):
     if url_ok(repoUrl):
-        SystemCall("git clone --recursive {repo} {dest}".format(repo=repoUrl, dest=repoDest))
+        CheckDirectory(repoDest, True)
+        SystemCall("git clone --recursive {repo} {dest}".format(
+            repo=repoUrl, dest=repoDest))
     else:
         raise Exception("Repo Url not found: {url}".format(url=repoUrl))
 
-def UpdateRepo(repo, remote, branch):
-    pass
+def UpdateRepo(repoDir, remote, branch):
+    cwd = os.getcwd()
+    try:
+        os.chdir(repoDir)
+        SystemCall("git fetch {rem} {br}".format(rem=remote, br=branch))
+        SystemCall("git pull --rebase {rem} {br}".
+            format(rem=remote, br=branch))
+    except OSError as error:
+        raise error 
+    except subprocess.CalledProcessError as error:
+        os.chdir(cwd)
+        raise error
+    except:
+        os.chdir(cwd)
+        raise Exception("Something unexpected went wrong when updating "
+                "the git repo at {rep".format(rep=repoDir))
+    os.chdir(cwd)
 
 def CheckDirectory(dirName, create_it=False):
     exists = os.path.isdir(dirName)
@@ -48,29 +68,31 @@ def CheckDirectory(dirName, create_it=False):
         return True
     return exists
 
-def CreateDirectories(machine):
-    baseLocation = ROOTDIR + "/" + machine + "/"
-    CheckDirectory(baseLocation, create_it=True)
-    return baseLocation
-
-def CloneRepos(baseLocation):
+def CloneNaluWindRepos(baseLocation):
     packages ={"https://github.com/spack/spack.git":baseLocation + "/spack",
       "git@github.com:Exawind/nalu-wind.git":baseLocation + "/nalu-wind"}
     for url, repoDest in packages.items():
         if CheckDirectory(repoDest) is False:
             CloneRepo(url,repoDest)
 
-def SetupSpackVariants(spackLocation, machine, options=[]):
+def SpackBuildPackage(spackLocation, machine, operatingSystem,
+        package, flags=[], variants=[]):
     spackCommand = spackLocation+"/bin/spack"
-    copy2(machine+"/packages.yaml",spackLocation+"/etc/spack")
-    copy2(machine+"/config.yaml",spackLocation+"/etc/spack")
-    executionCall = spackCommand + r" install --dirty nalu-wind%{compiler} +openfast ^trilinos@develop".format(compiler=COMPILER)
-    for o in options:
-        executionCall += " " + o
+    for f in glob(r"configs/machines/base/*.yaml"):
+        copy2(f, spackLocation+r"/etc/spack/")
+    for f in glob(r"configs/machines/{machine}/*.yaml.{machine}".format(
+        machine=machine)):
+        copy2(f, spackLocation+r"/etc/spack/{os}/".format(os=operatingSystem))
+    executionCall = " ".join([spackCommand]+[flags]+[package]+[variants])
     SystemCall(executionCall)
 
-def BuildNaluWind():
-    pass
+def BuildNaluWindSpack(configFile):
+    params = ReadInputParams(configFile)
+    baseLocation = params["rootdir"]+"/"+params["machine"]+"/"
+    CloneNaluWindRepos(baseLocation)
+    SpackBuildPackage(baseLocation+"spack", params["machine"], params["os"],
+            "nalu-wind", params["flags"], params["variants"])
+
 
 if __name__=="__main__":
     if len(sys.argv) < 2:
@@ -79,8 +101,4 @@ if __name__=="__main__":
         exit(1)
     else:
         configFile = sys.argv[1]
-    params = ReadInputParams(configFile)
-    baseLocation = CreateDirectories(params["machine"])
-    CloneRepos(baseLocation)
-    SetupSpackVariants(baseLocation+"spack",machine)
-    BuildNaluWind()
+    BuildNaluWindSpack(configFile)
