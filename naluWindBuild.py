@@ -19,7 +19,11 @@ def url_ok(url):
 
 def ReadInputParams(fileName):
     # preload optional input file values
-    output = {"flags":"","variants":""}
+    output = {
+            "flags":"",
+            "variants":"",
+            "rootdir":os.environ["HOME"]
+            }
     with open(fileName, 'r') as f:
         data = f.readlines()
     for line in data:
@@ -33,7 +37,12 @@ def ReadInputParams(fileName):
     return output
     
 def SystemCall(command):
-    subprocess.check_call(command)
+    try:
+        #subprocess.check_call(command)
+        os.system(command)
+    except:
+        print("Error with command: {cmd}".format(cmd=command))
+        exit()
 
 def CloneRepo( repoUrl, repoDest):
     if url_ok(repoUrl):
@@ -70,20 +79,25 @@ def CheckDirectory(dirName, create_it=False):
 
 def CloneNaluWindRepos(baseLocation):
     packages ={"https://github.com/spack/spack.git":baseLocation + "/spack",
-      "git@github.com:Exawind/nalu-wind.git":baseLocation + "/nalu-wind"}
+            "https://github.com/Exawind/nalu-wind.git":baseLocation + "/nalu-wind"}
     for url, repoDest in packages.items():
         if CheckDirectory(repoDest) is False:
             CloneRepo(url,repoDest)
 
 def SpackBuildPackage(spackLocation, machine, operatingSystem,
         package, flags=[], variants=[]):
-    spackCommand = spackLocation+"/bin/spack"
+    spackCommand = spackLocation+"/bin/spack install"
+    CheckDirectory(spackLocation+r"/etc/spack/{os}".format(os=operatingSystem),
+            True)
     for f in glob(r"configs/machines/base/*.yaml"):
         copy2(f, spackLocation+r"/etc/spack/")
     for f in glob(r"configs/machines/{machine}/*.yaml.{machine}".format(
         machine=machine)):
-        copy2(f, spackLocation+r"/etc/spack/{os}/".format(os=operatingSystem))
+        newFile = f.strip(r"configs/machines/{machine}".format(machine=machine))
+        newFile = newFile.strip(".{machine}".format(machine=machine))
+        copy2(f, spackLocation+r"/etc/spack/{os}/".format(os=operatingSystem)+newFile)
     executionCall = " ".join([spackCommand]+[flags]+[package]+[variants])
+    print executionCall
     SystemCall(executionCall)
 
 def BuildNaluWindSpack(configFile):

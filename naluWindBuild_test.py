@@ -23,14 +23,14 @@ class GeneralFunctionsMocks(unittest.TestCase):
         #define mocks
         self.mock_isdir_patch = mock.patch("naluWindBuild.os.path.isdir")
         self.mock_makedirs_patch = mock.patch("naluWindBuild.os.makedirs")
-        self.mock_check_call_patch = mock.patch(
-                "naluWindBuild.subprocess.check_call")
+        self.mock_sys_call_patch = mock.patch(
+                "naluWindBuild.os.system")
         self.mock_chdir_patch = mock.patch("naluWindBuild.os.chdir")
         self.mock_getcwd_patch = mock.patch("naluWindBuild.os.getcwd")
         # start mocks for this object
         self.mock_isdir = self.mock_isdir_patch.start()
         self.mock_makedirs = self.mock_makedirs_patch.start()
-        self.mock_check_call = self.mock_check_call_patch.start()
+        self.mock_sys_call = self.mock_sys_call_patch.start()
         self.mock_chdir = self.mock_chdir_patch.start()
         self.mock_getcwd = self.mock_getcwd_patch.start()
         #define specific mock attributes/behaviors
@@ -47,7 +47,7 @@ class GeneralFunctionsMocks(unittest.TestCase):
     def tearDown(self):
         self.mock_isdir_patch.stop()
         self.mock_makedirs_patch.stop()
-        self.mock_check_call_patch.stop()
+        self.mock_sys_call_patch.stop()
         self.mock_chdir_patch.stop()
         self.mock_getcwd_patch.stop()
         self.dirList = [self.ROOTDIR]
@@ -73,7 +73,7 @@ class GeneralFunctionsTest(GeneralFunctionsMocks):
         repoUrl = "https://github.com/spack/spack.git"
         repoDir = self.ROOTDIR+"/spack"
         nwb.CloneRepo(repoUrl,repoDir)
-        self.mock_check_call.assert_called_once_with("git clone --recursive"
+        self.mock_sys_call.assert_called_once_with("git clone --recursive"
             " {url} {rdir}".format(url=repoUrl, rdir=repoDir))
 
     def test_clone_repo_url_bad(self):
@@ -88,9 +88,9 @@ class GeneralFunctionsTest(GeneralFunctionsMocks):
         repoDir = self.ROOTDIR+"/spack"
         nwb.CloneRepo(repoUrl, repoDir)
         nwb.UpdateRepo(repoDir,"origin", "develop")
-        self.mock_check_call.assert_any_call(
+        self.mock_sys_call.assert_any_call(
                 "git fetch origin develop")
-        self.mock_check_call.assert_called_with(
+        self.mock_sys_call.assert_called_with(
                 "git pull --rebase origin develop")
         self.assertEqual(self.ROOTDIR, nwb.os.getcwd())
 
