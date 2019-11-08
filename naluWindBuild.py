@@ -2,7 +2,7 @@
 ########################################################
 #
 #  This script is a template for building nalu-wind
-#  with catalyst support from scratch
+#  support from scratch
 #
 ########################################################
 import os
@@ -17,6 +17,18 @@ except:
 import subprocess
 from glob import glob
 from shutil import rmtree
+
+"""
+Conventions
+
+ROOTDIR: starting place for all installation operations
+MACHINE:
+OS:
+FLAGS:
+VARIANTES:
+
+
+"""
 
 # Functions
 def url_ok(url):
@@ -35,7 +47,7 @@ def ReadInputParams(fileName):
     with open(fileName, 'r') as f:
         data = f.readlines()
     for line in data:
-        temp = line.strip().split(":")
+        temp = line.strip().split(":",1)
         # skip blank lines
         if len(temp)<=1:
             continue
@@ -47,13 +59,13 @@ def ReadInputParams(fileName):
     
 def SystemCall(command):
     try:
-        #subprocess.check_call(command)
-        os.system(command)
+        subprocess.check_call(command, shell=True)
+        #os.system(command)
     except:
         print("Error with command: {cmd}".format(cmd=command))
-        exit()
+        exit(1)
 
-def CloneRepo( repoUrl, repoDest):
+def CloneGitRepo( repoUrl, repoDest):
     if url_ok(repoUrl):
         CheckDirectory(repoDest, True)
         SystemCall("git clone --recursive {repo} {dest}".format(
@@ -61,9 +73,10 @@ def CloneRepo( repoUrl, repoDest):
     else:
         raise Exception("Repo Url not found: {url}".format(url=repoUrl))
 
-def UpdateRepo(repoDir, remote, branch):
+def UpdateGitRepo(repoDir, remote, branch):
     cwd = os.getcwd()
     try:
+        CheckGitDirectory(repoDir)
         os.chdir(repoDir)
         SystemCall("git fetch {rem} {br}".format(rem=remote, br=branch))
         SystemCall("git pull --rebase {rem} {br}".
@@ -86,12 +99,17 @@ def CheckDirectory(dirName, create_it=False):
         return True
     return exists
 
+def CheckGitDirectory(dirName):
+    result = subprocess.check_call("cd {dir}; git status".format(dir=dirName),
+            shell=True)
+    return result == 0
+
 def CloneNaluWindRepos(baseLocation):
     packages ={"https://github.com/spack/spack.git":baseLocation + "/spack",
             "https://github.com/Exawind/nalu-wind.git":baseLocation + "/nalu-wind"}
     for url, repoDest in packages.items():
         if CheckDirectory(repoDest) is False:
-            CloneRepo(url,repoDest)
+            CloneGitRepo(url,repoDest)
 
 def SpackBuildPackage(spackLocation, machine, operatingSystem,
         package, flags=[], variants=[]):
@@ -108,7 +126,7 @@ def SpackBuildPackage(spackLocation, machine, operatingSystem,
         newFile = newFile.strip(".{machine}".format(machine=machine))
         copy2(f, spackLocation+r"/etc/spack/{os}/".format(os=operatingSystem)+newFile)
     executionCall = " ".join([spackCommand]+[flags]+[package]+[variants])
-    print(executionCallr)
+    print(executionCall)
     SystemCall(executionCall)
 
 def BuildNaluWindSpack(configFile):

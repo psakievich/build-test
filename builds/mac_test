@@ -1,0 +1,4 @@
+machine: mac
+os: darwin
+wipe_directories: false
+flags: --test root --cdash-build 'mojave_clang' --cdash-site 'mac' --cdash-upload-url 'http://my.cdash.org/submit.php?project=dummy_dash'
