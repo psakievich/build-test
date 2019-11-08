@@ -131,7 +131,9 @@ def SpackBuildPackage(spackLocation, machine, operatingSystem,
 
 def BuildNaluWindSpack(configFile):
     params = ReadInputParams(configFile)
-    baseLocation = params["rootdir"]+"/"+params["machine"]+"/"
+    baseLocation = params["rootdir"]+"/" #+params["machine"]+"/"
+    # DANGER WILL ROBINSON BAD IF MULTIPLE PLATFORMS VIA ONE SPACK
+    # TODO
     if params["wipe_directories"] and CheckDirectory(baseLocation):
         print( "Removing directory {dir}".format(dir=baseLocation))
         rmtree(baseLocation)

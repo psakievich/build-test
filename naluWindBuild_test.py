@@ -80,7 +80,7 @@ class GeneralFunctionsTest(GeneralFunctionsMocks):
     def test_clone_repo_url_bad(self):
         repoUrl = "https://gothib.com/spock/spock.git"
         repoDir = self.ROOTDIR+"/spack"
-        with self.assertRaises(IOError):
+        with self.assertRaises(Exception):
             nwb.CloneGitRepo(repoUrl,repoDir)
 
     def test_update_repo(self):

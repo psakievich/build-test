@@ -1,3 +1,4 @@
 machine: snl-ceerws
 os: linux
-flags: --dirty
+rootdir: /projects/wind
+flags: --test=root --keep-stage --cdash-upload-url 'http://my.cdash.org/submit.php?project=dummy_dash' --log-format cdash --dont-restage
