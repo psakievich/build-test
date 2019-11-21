@@ -1,8 +1,8 @@
 import unittest
 try:
-    import mock
-except:
     import unittest.mock as mock
+except:
+    raise Exception("Must run with python3")
 import naluWindBuild as nwb
 
 class GeneralFunctionsMocks(unittest.TestCase):
@@ -104,7 +104,7 @@ class ReadInputMock(unittest.TestCase):
             os: darwin
             rootdir: /blah/blah2
             """
-        with mock.patch('naluWindBuild.open', mock.mock_open(read_data=inputFile)):
+        with mock.patch('builtins.open', mock.mock_open(read_data=inputFile)):
             params = nwb.ReadInputParams("dummy.txt")
         self.assertEqual("darwin",params["os"])
         self.assertEqual("mac",params["machine"])
@@ -119,7 +119,7 @@ class ReadInputMock(unittest.TestCase):
             rootdir: /blah/blah2
             flags: --only dependencies --dirty
             """
-        with mock.patch('naluWindBuild.open', mock.mock_open(read_data=inputFile)):
+        with mock.patch('builtins.open', mock.mock_open(read_data=inputFile)):
             params = nwb.ReadInputParams("dummy.txt")
         self.assertEqual("darwin",params["os"])
         self.assertEqual("mac",params["machine"])
@@ -135,7 +135,7 @@ class ReadInputMock(unittest.TestCase):
             flags: --dirty
             variants: +openfast ~shared
             """
-        with mock.patch('naluWindBuild.open', mock.mock_open(read_data=inputFile)):
+        with mock.patch('builtins.open', mock.mock_open(read_data=inputFile)):
             params = nwb.ReadInputParams("dummy.txt")
         self.assertEqual("darwin",params["os"])
         self.assertEqual("mac",params["machine"])
@@ -152,7 +152,7 @@ class ReadInputMock(unittest.TestCase):
             variants: +openfast ~shared
             wipe_directories: true
             """
-        with mock.patch('naluWindBuild.open', mock.mock_open(read_data=inputFile)):
+        with mock.patch('builtins.open', mock.mock_open(read_data=inputFile)):
             params = nwb.ReadInputParams("dummy.txt")
         self.assertEqual("darwin",params["os"])
         self.assertEqual("mac",params["machine"])
@@ -170,7 +170,7 @@ class ReadInputMock(unittest.TestCase):
             variants: +openfast ~shared
             wipe_directories: false
             """
-        with mock.patch('naluWindBuild.open', mock.mock_open(read_data=inputFile)):
+        with mock.patch('builtins.open', mock.mock_open(read_data=inputFile)):
             params = nwb.ReadInputParams("dummy.txt")
         self.assertEqual("darwin",params["os"])
         self.assertEqual("mac",params["machine"])
@@ -188,7 +188,7 @@ class ReadInputMock(unittest.TestCase):
             variants: +openfast ~shared
             wipe_directories: false
             """
-        with mock.patch('naluWindBuild.open', mock.mock_open(read_data=inputFile)):
+        with mock.patch('builtins.open', mock.mock_open(read_data=inputFile)):
              params = nwb.ReadInputParams("dummy.txt")
         self.assertEqual("darwin",params["os"])
         self.assertEqual("mac",params["machine"])
