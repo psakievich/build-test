@@ -1,0 +1,5 @@
+machine: ghost
+os: linux
+rootdir: /projects/wind
+flags: --test=root --keep-stage --cdash-upload-url 'http://my.cdash.org/submit.php?project=dummy_dash' --log-format cdash --dont-restage
+variants: testtol=1e-4
