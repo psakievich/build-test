@@ -56,7 +56,7 @@ def ReadInputParams(fileName):
         output[key] = value
     output["wipe_directories"] = output["wipe_directories"].lower() in true
     return output
-    
+
 def SystemCall(command):
     try:
         subprocess.check_call(command, shell=True)
@@ -79,8 +79,8 @@ def UpdateGitRepo(repoDir, remote, branch):
         CheckGitDirectory(repoDir)
         os.chdir(repoDir)
         SystemCall("git fetch {rem} {br}".format(rem=remote, br=branch))
-        SystemCall("git pull --rebase {rem} {br}".
-            format(rem=remote, br=branch))
+        SystemCall("git checkout {br}".
+            format(br=branch))
     except OSError as error:
         raise error 
     except subprocess.CalledProcessError as error:
@@ -105,11 +105,11 @@ def CheckGitDirectory(dirName):
     return result == 0
 
 def CloneNaluWindRepos(baseLocation):
-    packages ={"https://github.com/spack/spack.git":baseLocation + "/spack",
-            "https://github.com/Exawind/nalu-wind.git":baseLocation + "/nalu-wind"}
+    packages ={"https://github.com/psakievich/spack.git":baseLocation + "/spack"}
     for url, repoDest in packages.items():
         if CheckDirectory(repoDest) is False:
             CloneGitRepo(url,repoDest)
+    UpdateGitRepo(baseLocation + "/spack", "origin", "cdash-nw")
 
 def SpackBuildPackage(spackLocation, machine, operatingSystem,
         package, flags=[], variants=[]):
@@ -131,9 +131,7 @@ def SpackBuildPackage(spackLocation, machine, operatingSystem,
 
 def BuildNaluWindSpack(configFile):
     params = ReadInputParams(configFile)
-    baseLocation = params["rootdir"]+"/" #+params["machine"]+"/"
-    # DANGER WILL ROBINSON BAD IF MULTIPLE PLATFORMS VIA ONE SPACK
-    # TODO
+    baseLocation = params["rootdir"]+"/"+params["machine"]+"/"
     if params["wipe_directories"] and CheckDirectory(baseLocation):
         print( "Removing directory {dir}".format(dir=baseLocation))
         rmtree(baseLocation)
