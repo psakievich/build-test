@@ -7,4 +7,4 @@ To use make sure you've sourced spack and then issue the command
 spack repo add [build_test_location]/exawind_pkg_repo]
 ```
 
-Now the package files in this repo will take precident over the builtin packages.
+Now the package files in this repo will take precedent over the builtin packages.
